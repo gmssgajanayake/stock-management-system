@@ -2,11 +2,17 @@
 <html>
 <head>
     <title>@yield('title')</title>
+    @vite('resources/js/app.js')
+    @vite('resources/css/app.css')
+
 </head>
 <body>
 
     <nav>
-        <h2>My Stock Management System</h2>
+        <h1 class="text-3xl font-bold underline">
+      Hello world!
+    </h1>
+
         <hr>
     </nav>
 
