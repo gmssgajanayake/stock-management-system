@@ -1,7 +1,13 @@
 @extends('dashboard')
 
 @section('content')
-    @section('content')
-        <h1 class="text-2xl font-bold mb-4">Customers</h1>
-    @endsection
+    {{-- Desktop view --}}
+    <h1 class="hidden lg:block text-2xl font-bold mb-4">
+        Customer
+    </h1>
+
+    {{-- Mobile view --}}
+    <span class="block lg:hidden text-lg font-semibold mb-4">
+        Customer
+    </span>
 @endsection
