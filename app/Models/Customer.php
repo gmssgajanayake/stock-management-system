@@ -6,5 +6,15 @@ use Illuminate\Database\Eloquent\Model;
 
 class Customer extends Model
 {
-    //
+    protected $fillable = [
+        'name',
+        'phone',
+        'email',
+    ];
+
+    // A Customer can have multiple Orders
+    public function orders()
+    {
+        return $this->hasMany(Order::class);
+    }
 }
