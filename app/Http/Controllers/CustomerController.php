@@ -3,15 +3,21 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
+use Illuminate\Http\RedirectResponse;
+
+use App\Models\Customer;
+use Illuminate\View\View;
 
 class CustomerController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(): View
     {
-        //
+        $customers = Customer::all();
+        return view('customers.index');
     }
 
     /**
