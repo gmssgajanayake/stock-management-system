@@ -1,5 +1,8 @@
 <?php
 
+use App\Http\Controllers\CustomerController;
+use App\Http\Controllers\OrderController;
+use App\Http\Controllers\ProductController;
 use Illuminate\Support\Facades\Route;
 
 Route::view('/', 'welcome');
@@ -12,5 +15,14 @@ Route::view('profile', 'profile')
     ->middleware(['auth'])
     ->name('profile');
 
-
 require __DIR__.'/auth.php';
+
+Route::resource('/customers',CustomerController::class);
+
+
+Route::resource('/products', ProductController::class);
+
+
+Route::resource('/orders', OrderController::class);
+
+
