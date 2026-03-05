@@ -3,16 +3,21 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Product extends Model
 {
+
+    use HasFactory;
     protected $fillable = [
         'sku',
         'name',
+        'slug',
         'price',
         'stock',
         'is_active',
         'image',
+        'category_id',
     ];
 
     protected $casts = [
@@ -37,4 +42,11 @@ class Product extends Model
     {
         return $this->hasOne(ProductImage::class)->where('is_main', true);
     }
+
+    // A Product belongs to a Category
+    public function category()
+    {
+        return $this->belongsTo(Category::class);
+    }
+
 }
