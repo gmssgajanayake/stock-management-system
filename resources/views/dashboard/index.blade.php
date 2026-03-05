@@ -1,10 +1,10 @@
 @extends('dashboard') @section('content-title') {{-- Desktop view --}}
     <h1 class="hidden lg:block text-2xl font-bold mb-4">
-        Orders
+        Dashboard
     </h1> {{-- Mobile view --}}
     <span class="block lg:hidden text-lg font-semibold mb-4">
-        Orders
+        Dashboard
     </span>
 @endsection @section('content')
-    <h1>orders</h1>
+    <h1>dashboard</h1>
 @endsection
