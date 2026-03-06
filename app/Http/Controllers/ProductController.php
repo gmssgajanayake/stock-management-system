@@ -87,12 +87,11 @@ class ProductController extends Controller
     }
 
     // Show single product
-    public function show($id)
-    {
-        $product = Product::with('images', 'category')->findOrFail($id);
-        return response()->json($product);
-    }
-
+public function show($id)
+{
+    $product = Product::with(['mainImage', 'images', 'category'])->findOrFail($id);
+    return view('products.show', compact('product'));
+}
     // Update product
     public function update(Request $request, $id)
     {
