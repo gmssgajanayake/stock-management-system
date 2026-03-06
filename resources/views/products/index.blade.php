@@ -1,42 +1,73 @@
 @extends('dashboard')
 
 @section('content-title')
-<h1 class="hidden lg:block text-2xl font-bold mb-4">Products</h1>
-<span class="block lg:hidden text-lg font-semibold mb-4">Products</span>
+    <h1 class="hidden lg:block text-2xl font-bold mb-4">Products</h1>
+    <span class="block lg:hidden text-lg font-semibold mb-4">Products</span>
 @endsection
 
 @section('content')
-<a href="{{ route('products.create') }}" class="btn btn-primary mb-4">Add New Product</a>
+    <button id="createProductBtn" class="mb-4 px-4 py-2 bg-green-500 text-white rounded">Add New Product</button>
 
-<table>
-    <thead>
-        <tr>
-            <th>Id</th>
-            <th>SKU</th>
-            <th>Name</th>
-            <th>Slug</th>
-            <th>Price</th>
-            <th>Stock</th>
-            <th>Active Status</th>
-            <th>Image</th>
-            <th>Category</th>
-            <th>Actions</th>
-        </tr>
-    </thead>
-    <tbody id="productTable"></tbody>
-</table>
+    <table class="table-auto w-full border">
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th>SKU</th>
+                <th>Name</th>
+                <th>Slug</th>
+                <th>Price</th>
+                <th>Stock</th>
+                <th>Status</th>
+                <th>Main Image</th>
+                <th>Category</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody id="productTable"></tbody>
+    </table>
 
-<div id="pagination"></div>
+    <div id="pagination" class="mt-4"></div>
 @endsection
 
 @section('scripts')
 <script>
 $(document).ready(function () {
     loadProducts();
+
+    // Pagination
+    $(document).on("click", ".pageBtn", function () {
+        let page = $(this).data("page");
+        loadProducts(page);
+    });
+
+    // Delete
+    $(document).on("click", ".deleteBtn", function () {
+        let id = $(this).data("id");
+        if(confirm("Are you sure to delete this product?")) {
+            $.ajax({
+                url: `/products/${id}`,
+                type: "DELETE",
+                data: { _token: "{{ csrf_token() }}" },
+                success: function() { loadProducts(); }
+            });
+        }
+    });
+
+    // Edit
+    $(document).on("click", ".editBtn", function () {
+        let id = $(this).data("id");
+        window.location.href = `/products/${id}/edit`;
+    });
+
+    // Show
+    $(document).on("click", ".showBtn", function () {
+        let id = $(this).data("id");
+        window.location.href = `/products/${id}`;
+    });
 });
 
 function loadProducts(page = 1) {
-    $.get("/products?page=" + page, function (response) {
+    $.get(`/products/list?page=${page}`, function(response) {
         let rows = "";
         response.data.forEach(p => {
             rows += `
@@ -48,40 +79,27 @@ function loadProducts(page = 1) {
                     <td>${p.price}</td>
                     <td>${p.stock}</td>
                     <td>${p.is_active ? 'Active' : 'Deactive'}</td>
-                    <td>${p.mainImage ?? ''}</td>
+                    <td>${p.main_image?.image_path ? `<img src="/storage/${p.main_image.image_path}" width="50">` : ''}</td>
                     <td>${p.category?.name ?? ''}</td>
                     <td>
-                        <a href="/products/${p.id}/edit" class="editBtn" data-id="${p.id}">Edit</a>
+                        <button class="showBtn" data-id="${p.id}">Show</button>
+                        <button class="editBtn" data-id="${p.id}">Edit</button>
                         <button class="deleteBtn" data-id="${p.id}">Delete</button>
                     </td>
-                </tr>`;
+                </tr>
+            `;
         });
         $("#productTable").html(rows);
         createPagination(response);
     });
 }
 
-$(document).on("click", ".deleteBtn", function () {
-    let id = $(this).data("id");
-    $.ajax({
-        url: "/products/" + id,
-        type: "DELETE",
-        data: { _token: "{{ csrf_token() }}" },
-        success: function () { loadProducts(); }
-    });
-});
-
 function createPagination(data) {
     let pagination = "";
-    for (let i = 1; i <= data.last_page; i++) {
+    for(let i=1; i<=data.last_page; i++) {
         pagination += `<button class="pageBtn" data-page="${i}">${i}</button>`;
     }
     $("#pagination").html(pagination);
 }
-
-$(document).on("click", ".pageBtn", function () {
-    let page = $(this).data("page");
-    loadProducts(page);
-});
 </script>
 @endsection
