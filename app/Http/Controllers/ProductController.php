@@ -4,99 +4,115 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Product;
+use App\Models\ProductImage;
+use App\Models\Category;
 
 class ProductController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index(Request $request)
+    // Display the products page (blade)
+    public function index()
     {
-        $products = Product::with('category')->paginate(5);
-
-        // If the request is AJAX, return JSON
-        if ($request->ajax()) {
-            return response()->json($products);
-        }
-
-        // Otherwise, load Blade view
-        return view('products.index', compact('products'));
+        return view('products.index'); // blade handles AJAX data
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
+    // Fetch products for AJAX
+    public function list(Request $request)
     {
-        return view('products.create'); // Blade form for creating
+        $products = Product::with(['category', 'mainImage'])->paginate(5);
+        return response()->json($products);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        $product = Product::create($request->all());
-
-        if ($request->ajax()) {
-            return response()->json($product);
-        }
-
-        return redirect()->route('products.index')
-            ->with('success', 'Product created successfully.');
-    }
-
-    /**
-     * Display the specified resource.
-     */
-    public function show(Request $request, $id)
-    {
-        $product = Product::with('category')->find($id);
-
-        if ($request->ajax()) {
-            return response()->json($product);
-        }
-
-        return view('products.show', compact('product'));
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
     public function edit($id)
     {
-        $product = Product::find($id);
-        return view('products.edit', compact('product'));
+        $product = Product::with('images')->findOrFail($id);
+        $categories = Category::all();
+        return view('products.edit', compact('product', 'categories'));
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
+    // Store new product with images
+    public function store(Request $request)
+    {
+        $request->validate([
+            'sku' => 'required|unique:products,sku',
+            'name' => 'required',
+            'slug' => 'required|unique:products,slug',
+            'price' => 'required|numeric',
+            'stock' => 'required|integer',
+            'category_id' => 'required|exists:categories,id',
+            'images.*' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
+        ]);
+
+        $product = Product::create($request->only(['sku', 'name', 'slug', 'price', 'stock', 'category_id', 'is_active']));
+
+        if ($request->hasFile('images')) {
+            foreach ($request->file('images') as $key => $image) {
+                $path = $image->store('products', 'public');
+                ProductImage::create([
+                    'product_id' => $product->id,
+                    'image_path' => $path,
+                    'is_main' => $key === 0 ? true : false
+                ]);
+            }
+        }
+
+        return response()->json($product);
+    }
+
+    // Show single product
+    public function show($id)
+    {
+        $product = Product::with('images', 'category')->findOrFail($id);
+        return response()->json($product);
+    }
+
+    // Update product
     public function update(Request $request, $id)
     {
-        $product = Product::find($id);
-        $product->update($request->all());
+        $product = Product::findOrFail($id);
 
-        if ($request->ajax()) {
-            return response()->json($product);
+        $request->validate([
+            'sku' => 'required|unique:products,sku,' . $id,
+            'name' => 'required',
+            'slug' => 'required|unique:products,slug,' . $id,
+            'price' => 'required|numeric',
+            'stock' => 'required|integer',
+            'category_id' => 'required|exists:categories,id',
+            'images.*' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
+        ]);
+
+        $product->update($request->only(['sku', 'name', 'slug', 'price', 'stock', 'category_id', 'is_active']));
+
+        if ($request->hasFile('images')) {
+            foreach ($request->file('images') as $image) {
+                $path = $image->store('products', 'public');
+                ProductImage::create([
+                    'product_id' => $product->id,
+                    'image_path' => $path
+                ]);
+            }
         }
 
-        return redirect()->route('products.index')
-            ->with('success', 'Product updated successfully.');
+        return response()->json($product);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Request $request, $id)
+    // Delete product
+    public function destroy($id)
     {
-        Product::destroy($id);
+        $product = Product::findOrFail($id);
 
-        if ($request->ajax()) {
-            return response()->json(['success' => true]);
+        foreach ($product->images as $image) {
+            \Storage::disk('public')->delete($image->image_path);
+            $image->delete();
         }
 
-        return redirect()->route('products.index')
-            ->with('success', 'Product deleted successfully.');
+        $product->delete();
+
+        return response()->json(['success' => true]);
+    }
+
+    public function create()
+    {
+        $categories = Category::all();
+        return view('products.create', compact('categories'));
     }
 }
