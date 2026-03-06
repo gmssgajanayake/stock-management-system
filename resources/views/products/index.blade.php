@@ -6,7 +6,9 @@
 @endsection
 
 @section('content')
-    <button id="createProductBtn" class="mb-4 px-4 py-2 bg-green-500 text-white rounded">Add New Product</button>
+   <button id="createProductBtn" class="mb-4 px-4 py-2 bg-green-500 text-white rounded">
+    Add New Product
+</button>
 
     <table class="table-auto w-full border">
         <thead>
@@ -43,12 +45,12 @@ $(document).ready(function () {
     // Delete
     $(document).on("click", ".deleteBtn", function () {
         let id = $(this).data("id");
-        if(confirm("Are you sure to delete this product?")) {
+        if (confirm("Are you sure to delete this product?")) {
             $.ajax({
                 url: `/products/${id}`,
                 type: "DELETE",
                 data: { _token: "{{ csrf_token() }}" },
-                success: function() { loadProducts(); }
+                success: function () { loadProducts(); }
             });
         }
     });
@@ -64,10 +66,32 @@ $(document).ready(function () {
         let id = $(this).data("id");
         window.location.href = `/products/${id}`;
     });
+
+     $("#createProductBtn").click(function() {
+        window.location.href = "/products/create"; // navigate to create page
+    });
+
+    // Toggle Active Status
+    $(document).on("click", ".statusBtn", function () {
+        let btn = $(this);
+        let id = btn.data("id");
+        $.ajax({
+            url: `/products/${id}/status`,
+            type: "PUT",
+            data: { _token: "{{ csrf_token() }}" },
+            success: function (res) {
+                if(res.status) {
+                    btn.text('Active').css('background-color', 'green');
+                } else {
+                    btn.text('Deactive').css('background-color', 'red');
+                }
+            }
+        });
+    });
 });
 
 function loadProducts(page = 1) {
-    $.get(`/products/list?page=${page}`, function(response) {
+    $.get(`/products/list?page=${page}`, function (response) {
         let rows = "";
         response.data.forEach(p => {
             rows += `
@@ -78,7 +102,13 @@ function loadProducts(page = 1) {
                     <td>${p.slug}</td>
                     <td>${p.price}</td>
                     <td>${p.stock}</td>
-                    <td>${p.is_active ? 'Active' : 'Deactive'}</td>
+                    <td>
+                        <button class="statusBtn px-2 py-1 rounded text-white font-semibold"
+                            data-id="${p.id}"
+                            style="background-color: ${p.is_active ? 'green' : 'red'}">
+                            ${p.is_active ? 'Active' : 'Deactive'}
+                        </button>
+                    </td>
                     <td>${p.main_image?.image_path ? `<img src="/storage/${p.main_image.image_path}" width="50">` : ''}</td>
                     <td>${p.category?.name ?? ''}</td>
                     <td>
@@ -96,7 +126,7 @@ function loadProducts(page = 1) {
 
 function createPagination(data) {
     let pagination = "";
-    for(let i=1; i<=data.last_page; i++) {
+    for (let i = 1; i <= data.last_page; i++) {
         pagination += `<button class="pageBtn" data-page="${i}">${i}</button>`;
     }
     $("#pagination").html(pagination);

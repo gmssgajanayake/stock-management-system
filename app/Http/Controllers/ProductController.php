@@ -142,4 +142,12 @@ class ProductController extends Controller
         $categories = Category::all();
         return view('products.create', compact('categories'));
     }
+
+public function toggleStatus(Product $product)
+{
+    $product->is_active = !$product->is_active; // flip status
+    $product->save();
+
+    return response()->json(['success' => true, 'status' => $product->is_active]);
+}
 }
