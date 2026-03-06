@@ -16,12 +16,33 @@ class ProductController extends Controller
     }
 
     // Fetch products for AJAX
-   public function list(Request $request)
+public function list(Request $request)
 {
     $query = Product::with(['category','mainImage']);
 
-    if($request->search){
-        $query->where('name','like','%'.$request->search.'%');
+    // Search by name
+    if ($request->search) {
+        $query->where('name', 'like', '%' . $request->search . '%');
+    }
+
+    // Sorting
+    if($request->sort){
+        $query->orderBy($request->sort, $request->direction ?? 'asc');
+    }
+
+    // Filter by category
+    if ($request->category_id) {
+        $query->where('category_id', $request->category_id);
+    }
+
+    // Filter by minimum price
+    if ($request->min_price) {
+        $query->where('price', '>=', $request->min_price);
+    }
+
+    // Filter by maximum price
+    if ($request->max_price) {
+        $query->where('price', '<=', $request->max_price);
     }
 
     $products = $query->paginate(10);
