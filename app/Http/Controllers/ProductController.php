@@ -68,4 +68,11 @@ class ProductController extends Controller
     {
         //
     }
+
+
+    public function list()
+    {
+        $products = Product::with('category')->get();
+        return response()->json($products);
+    }
 }
