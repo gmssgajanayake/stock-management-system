@@ -17,6 +17,8 @@ Route::view('profile', 'profile')
 
 require __DIR__ . '/auth.php';
 
+Route::get('/products/list', [ProductController::class, 'list']);
+
 Route::resource('/customers', CustomerController::class);
 
 
