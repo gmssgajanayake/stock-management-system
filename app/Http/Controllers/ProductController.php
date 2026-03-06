@@ -18,7 +18,7 @@ class ProductController extends Controller
     // Fetch products for AJAX
     public function list(Request $request)
     {
-        $products = Product::with(['category', 'mainImage'])->paginate(5);
+        $products = Product::with(['category', 'mainImage'])->paginate(10);
         return response()->json($products);
     }
 
@@ -78,17 +78,44 @@ class ProductController extends Controller
             'stock' => 'required|integer',
             'category_id' => 'required|exists:categories,id',
             'images.*' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
+            'main_image_id' => 'nullable|exists:product_images,id', // optional: let user select main image
         ]);
 
-        $product->update($request->only(['sku', 'name', 'slug', 'price', 'stock', 'category_id', 'is_active']));
+        $product->update($request->only([
+            'sku',
+            'name',
+            'slug',
+            'price',
+            'stock',
+            'category_id',
+            'is_active'
+        ]));
 
+        // Handle uploaded images
         if ($request->hasFile('images')) {
-            foreach ($request->file('images') as $image) {
+
+            // If you want the first uploaded image to replace main image:
+            foreach ($request->file('images') as $key => $image) {
                 $path = $image->store('products', 'public');
+
                 ProductImage::create([
                     'product_id' => $product->id,
-                    'image_path' => $path
+                    'image_path' => $path,
+                    'is_main' => false, // default false
                 ]);
+            }
+        }
+
+        // Handle main image selection (optional)
+        if ($request->filled('main_image_id')) {
+            // Reset previous main image
+            $product->mainImage()->update(['is_main' => false]);
+
+            // Set new main image
+            $mainImage = ProductImage::find($request->main_image_id);
+            if ($mainImage) {
+                $mainImage->is_main = true;
+                $mainImage->save();
             }
         }
 
