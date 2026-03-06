@@ -3,21 +3,24 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
-use Illuminate\Http\RedirectResponse;
-
 use App\Models\Product;
-use Illuminate\View\View;
 
 class ProductController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index(): View
+    public function index(Request $request)
     {
-        $products = Product::all();
-        return view('products.index')->with('products', $products);
+        $products = Product::with('category')->paginate(5);
+
+        // If the request is AJAX, return JSON
+        if ($request->ajax()) {
+            return response()->json($products);
+        }
+
+        // Otherwise, load Blade view
+        return view('products.index', compact('products'));
     }
 
     /**
@@ -25,7 +28,7 @@ class ProductController extends Controller
      */
     public function create()
     {
-        //
+        return view('products.create'); // Blade form for creating
     }
 
     /**
@@ -33,46 +36,67 @@ class ProductController extends Controller
      */
     public function store(Request $request)
     {
-        //
-    }
+        $product = Product::create($request->all());
 
+        if ($request->ajax()) {
+            return response()->json($product);
+        }
+
+        return redirect()->route('products.index')
+            ->with('success', 'Product created successfully.');
+    }
 
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show(Request $request, $id)
     {
-        //
+        $product = Product::with('category')->find($id);
+
+        if ($request->ajax()) {
+            return response()->json($product);
+        }
+
+        return view('products.show', compact('product'));
     }
 
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(string $id)
+    public function edit($id)
     {
-        //
+        $product = Product::find($id);
+        return view('products.edit', compact('product'));
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(Request $request, $id)
     {
-        //
+        $product = Product::find($id);
+        $product->update($request->all());
+
+        if ($request->ajax()) {
+            return response()->json($product);
+        }
+
+        return redirect()->route('products.index')
+            ->with('success', 'Product updated successfully.');
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    public function destroy(Request $request, $id)
     {
-        //
-    }
+        Product::destroy($id);
 
+        if ($request->ajax()) {
+            return response()->json(['success' => true]);
+        }
 
-    public function list()
-    {
-        $products = Product::with('category')->get();
-        return response()->json($products);
+        return redirect()->route('products.index')
+            ->with('success', 'Product deleted successfully.');
     }
 }
