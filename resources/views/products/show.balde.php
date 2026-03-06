@@ -1,7 +1,7 @@
 @extends('dashboard')
 
 @section('content-title')
-    <h1>Product Details</h1>
+<h1>Product Details</h1>
 @endsection
 
 @section('content')
@@ -15,7 +15,7 @@
     <p>Category: {{ $product->category->name ?? '' }}</p>
     <div>
         @foreach($product->images as $img)
-            <img src="/storage/{{ $img->image_path }}" width="100">
+        <img src="/storage/{{ $img->image_path }}" width="100">
         @endforeach
     </div>
 </div>

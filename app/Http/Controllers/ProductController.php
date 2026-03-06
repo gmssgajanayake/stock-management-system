@@ -16,39 +16,39 @@ class ProductController extends Controller
     }
 
     // Fetch products for AJAX
-public function list(Request $request)
-{
-    $query = Product::with(['category','mainImage']);
+    public function list(Request $request)
+    {
+        $query = Product::with(['category', 'mainImage']);
 
-    // Search by name
-    if ($request->search) {
-        $query->where('name', 'like', '%' . $request->search . '%');
+        // Search by name
+        if ($request->search) {
+            $query->where('name', 'like', '%' . $request->search . '%');
+        }
+
+        // Sorting
+        if ($request->sort) {
+            $query->orderBy($request->sort, $request->direction ?? 'asc');
+        }
+
+        // Filter by category
+        if ($request->category_id) {
+            $query->where('category_id', $request->category_id);
+        }
+
+        // Filter by minimum price
+        if ($request->min_price) {
+            $query->where('price', '>=', $request->min_price);
+        }
+
+        // Filter by maximum price
+        if ($request->max_price) {
+            $query->where('price', '<=', $request->max_price);
+        }
+
+        $products = $query->paginate(6);
+
+        return response()->json($products);
     }
-
-    // Sorting
-    if($request->sort){
-        $query->orderBy($request->sort, $request->direction ?? 'asc');
-    }
-
-    // Filter by category
-    if ($request->category_id) {
-        $query->where('category_id', $request->category_id);
-    }
-
-    // Filter by minimum price
-    if ($request->min_price) {
-        $query->where('price', '>=', $request->min_price);
-    }
-
-    // Filter by maximum price
-    if ($request->max_price) {
-        $query->where('price', '<=', $request->max_price);
-    }
-
-    $products = $query->paginate(10);
-
-    return response()->json($products);
-}
 
     public function edit($id)
     {
@@ -171,11 +171,11 @@ public function list(Request $request)
         return view('products.create', compact('categories'));
     }
 
-public function toggleStatus(Product $product)
-{
-    $product->is_active = !$product->is_active; // flip status
-    $product->save();
+    public function toggleStatus(Product $product)
+    {
+        $product->is_active = !$product->is_active; // flip status
+        $product->save();
 
-    return response()->json(['success' => true, 'status' => $product->is_active]);
-}
+        return response()->json(['success' => true, 'status' => $product->is_active]);
+    }
 }

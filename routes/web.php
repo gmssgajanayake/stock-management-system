@@ -6,28 +6,30 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\CategoryController;
 use Illuminate\Support\Facades\Route;
 
+// Public route (accessible without login)
 Route::view('/', 'welcome');
 
-Route::view('dashboard', 'dashboard.index')
-    ->middleware(['auth', 'verified'])
-    ->name('dashboard');
-
-Route::view('profile', 'profile')
-    ->middleware(['auth'])
-    ->name('profile');
-
+// Authentication routes
 require __DIR__ . '/auth.php';
 
-Route::get('/products/list', [ProductController::class,'list']);
-Route::put('/products/{product}/status', [ProductController::class, 'toggleStatus']);
-Route::resource('/products', ProductController::class);
+// All routes that require authentication
+Route::middleware(['auth', 'verified'])->group(function () {
 
+    // Dashboard and profile
+    Route::view('dashboard', 'dashboard.index')->name('dashboard');
+    Route::view('profile', 'profile')->name('profile');
 
-Route::post('/categories', [CategoryController::class, 'store'])->name('categories.store');
+    // Products
+    Route::get('/products/list', [ProductController::class,'list']);
+    Route::put('/products/{product}/status', [ProductController::class, 'toggleStatus']);
+    Route::resource('/products', ProductController::class);
 
-Route::resource('/customers', CustomerController::class);
+    // Categories
+    Route::post('/categories', [CategoryController::class, 'store'])->name('categories.store');
 
+    // Customers
+    Route::resource('/customers', CustomerController::class);
 
-Route::resource('/orders', OrderController::class);
-
-
+    // Orders
+    Route::resource('/orders', OrderController::class);
+});
