@@ -10,13 +10,21 @@
     Add New Product
 </button>
 
+    <div class="mb-4 flex gap-2">
+        <input
+            type="text"
+            id="searchProduct"
+            placeholder="Search product by name..."
+            class="border px-3 py-2 rounded w-64"
+        >
+    </div>
+
     <table class="table-auto w-full border">
         <thead>
             <tr>
                 <th>Id</th>
                 <th>SKU</th>
                 <th>Name</th>
-                <th>Slug</th>
                 <th>Price</th>
                 <th>Stock</th>
                 <th>Status</th>
@@ -90,16 +98,25 @@ $(document).ready(function () {
     });
 });
 
+// Search while typing
+$("#searchProduct").on("keyup", function () {
+    loadProducts(1);
+});
+
 function loadProducts(page = 1) {
-    $.get(`/products/list?page=${page}`, function (response) {
+
+    let search = $("#searchProduct").val();
+
+    $.get(`/products/list?page=${page}&search=${search}`, function (response) {
+
         let rows = "";
+
         response.data.forEach(p => {
             rows += `
                 <tr>
                     <td>${p.id}</td>
                     <td>${p.sku}</td>
                     <td>${p.name}</td>
-                    <td>${p.slug}</td>
                     <td>${p.price}</td>
                     <td>${p.stock}</td>
                     <td>
@@ -119,6 +136,7 @@ function loadProducts(page = 1) {
                 </tr>
             `;
         });
+
         $("#productTable").html(rows);
         createPagination(response);
     });

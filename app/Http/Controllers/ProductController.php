@@ -16,11 +16,18 @@ class ProductController extends Controller
     }
 
     // Fetch products for AJAX
-    public function list(Request $request)
-    {
-        $products = Product::with(['category', 'mainImage'])->paginate(10);
-        return response()->json($products);
+   public function list(Request $request)
+{
+    $query = Product::with(['category','mainImage']);
+
+    if($request->search){
+        $query->where('name','like','%'.$request->search.'%');
     }
+
+    $products = $query->paginate(10);
+
+    return response()->json($products);
+}
 
     public function edit($id)
     {
