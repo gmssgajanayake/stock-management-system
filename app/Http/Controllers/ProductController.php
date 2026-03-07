@@ -18,7 +18,35 @@ class ProductController extends Controller
     // Fetch products for AJAX
     public function list(Request $request)
     {
-        $products = Product::with(['category', 'mainImage'])->paginate(10);
+        $query = Product::with(['category', 'mainImage']);
+
+        // Search by name
+        if ($request->search) {
+            $query->where('name', 'like', '%' . $request->search . '%');
+        }
+
+        // Sorting
+        if ($request->sort) {
+            $query->orderBy($request->sort, $request->direction ?? 'asc');
+        }
+
+        // Filter by category
+        if ($request->category_id) {
+            $query->where('category_id', $request->category_id);
+        }
+
+        // Filter by minimum price
+        if ($request->min_price) {
+            $query->where('price', '>=', $request->min_price);
+        }
+
+        // Filter by maximum price
+        if ($request->max_price) {
+            $query->where('price', '<=', $request->max_price);
+        }
+
+        $products = $query->paginate(6);
+
         return response()->json($products);
     }
 
@@ -59,12 +87,11 @@ class ProductController extends Controller
     }
 
     // Show single product
-    public function show($id)
-    {
-        $product = Product::with('images', 'category')->findOrFail($id);
-        return response()->json($product);
-    }
-
+public function show($id)
+{
+    $product = Product::with(['mainImage', 'images', 'category'])->findOrFail($id);
+    return view('products.show', compact('product'));
+}
     // Update product
     public function update(Request $request, $id)
     {
@@ -141,5 +168,13 @@ class ProductController extends Controller
     {
         $categories = Category::all();
         return view('products.create', compact('categories'));
+    }
+
+    public function toggleStatus(Product $product)
+    {
+        $product->is_active = !$product->is_active; // flip status
+        $product->save();
+
+        return response()->json(['success' => true, 'status' => $product->is_active]);
     }
 }
