@@ -103,7 +103,7 @@ class CustomerController extends Controller
 
         $customer = Customer::findOrFail($id);
 
-        return view('customers.edit', compact('customer'));
+        return view('customers.edit', compact('customer','hash'));
     }
 
     // Update customer

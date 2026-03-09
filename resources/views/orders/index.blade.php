@@ -22,6 +22,8 @@
         </select>
 
         <button id="filterBtn" class="bg-blue-600 text-white px-3 py-1 rounded">Filter</button>
+
+        <button id="createBtn">Create order</button>
     </div>
 
     <table class="min-w-full bg-white border">
@@ -38,11 +40,35 @@
             @foreach($orders as $order)
                 <tr class="border-b">
                     <td>{{ $order->order_number }}</td>
-                    <td>{{ $order->customer->name }}</td>
+                    <td>{{ $order->customer->first_name . ' ' . $order->customer->last_name }}</td>
                     <td>{{ $order->status }}</td>
                     <td>${{ $order->grand_total }}</td>
-                    <td>
+                    <td class="flex gap-2">
+
                         <a href="{{ route('orders.show', $order->id) }}" class="text-blue-600">View</a>
+
+                        @if($order->status == 'PENDING')
+
+                            <button class="confirmBtn bg-green-600 text-white px-2 py-1 rounded" data-id="{{ $order->id }}">
+                                Confirm
+                            </button>
+
+                            <button class="cancelBtn bg-red-600 text-white px-2 py-1 rounded" data-id="{{ $order->id }}">
+                                Cancel
+                            </button>
+
+                        @elseif($order->status == 'CONFIRMED')
+
+                            <button class="deliverBtn bg-blue-600 text-white px-2 py-1 rounded" data-id="{{ $order->id }}">
+                                Deliver
+                            </button>
+
+                            <button class="cancelBtn bg-red-600 text-white px-2 py-1 rounded" data-id="{{ $order->id }}">
+                                Cancel
+                            </button>
+
+                        @endif
+
                     </td>
                 </tr>
             @endforeach
@@ -63,6 +89,41 @@
             if (customer) url.searchParams.set('customer_id', customer);
             else url.searchParams.delete('customer_id');
             window.location.href = url.toString();
+        });
+
+        $('#createBtn').click(function () {
+            window.location.href = 'orders/create';
+        });
+
+        function updateStatus(orderId, status) {
+
+            $.ajax({
+                url: `/orders/${orderId}/status`,
+                type: "PUT",
+                data: {
+                    status: status,
+                    _token: "{{ csrf_token() }}"
+                },
+                success: function () {
+                    location.reload();
+                },
+                error: function (err) {
+                    alert(err.responseJSON.message);
+                }
+            });
+
+        }
+
+        $(document).on('click', '.confirmBtn', function () {
+            updateStatus($(this).data('id'), 'CONFIRMED');
+        });
+
+        $(document).on('click', '.cancelBtn', function () {
+            updateStatus($(this).data('id'), 'CANCELLED');
+        });
+
+        $(document).on('click', '.deliverBtn', function () {
+            updateStatus($(this).data('id'), 'DELIVERED');
         });
     </script>
 @endsection

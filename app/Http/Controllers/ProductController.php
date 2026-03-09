@@ -70,7 +70,8 @@ class ProductController extends Controller
         $id = $decoded[0];
         $product = Product::with('images')->findOrFail($id);
         $categories = Category::all();
-        return view('products.edit', compact('product', 'categories'));
+
+         return view('products.edit', compact('product', 'categories', 'hash'));
     }
 
     // Store new product with images

@@ -8,6 +8,8 @@ use App\Models\Customer;
 use App\Models\Product;
 use Illuminate\Http\Request;
 
+use Illuminate\Support\Facades\DB;
+
 class OrderController extends Controller
 {
     // List all orders with filters
@@ -111,40 +113,48 @@ class OrderController extends Controller
     // Confirm order and reduce stock
     public function updateStatus(Request $request, Order $order)
     {
-        $request->validate([
-            'status' => 'required|in:PENDING,CONFIRMED,CANCELLED,DELIVERED'
-        ]);
+        $newStatus = $request->status;
 
-        // Only PENDING orders can be confirmed
-        if ($request->status === 'CONFIRMED' && $order->status === 'PENDING') {
-            DB::transaction(function () use ($order) {
-                // Check stock for all items
-                foreach ($order->items as $item) {
-                    if ($item->qty > $item->product->stock) {
-                        abort(400, "Insufficient stock for product {$item->product->name}");
-                    }
-                }
+        if (in_array($order->status, ['DELIVERED', 'CANCELLED'])) {
+            return response()->json([
+                'message' => 'Order already finalized'
+            ], 400);
+        }
 
-                // Reduce stock
+        DB::transaction(function () use ($order, $newStatus) {
+
+            if ($newStatus == 'CONFIRMED') {
+
                 foreach ($order->items as $item) {
+
                     $product = $item->product;
+
+                    if ($product->stock < $item->qty) {
+                        abort(400, "Not enough stock for {$product->name}");
+                    }
+
                     $product->stock -= $item->qty;
                     $product->save();
                 }
 
-                // Update order status
-                $order->status = 'CONFIRMED';
-                $order->save();
-            });
-        } else if (in_array($request->status, ['CANCELLED', 'DELIVERED'])) {
-            $order->status = $request->status;
-            $order->save();
-        } else if ($request->status === 'PENDING') {
-            // Allow reversion only if order is CONFIRMED? Optional
-            $order->status = 'PENDING';
-            $order->save();
-        }
+            }
 
-        return response()->json(['success' => true, 'status' => $order->status]);
+            if ($newStatus == 'CANCELLED' && $order->status == 'CONFIRMED') {
+
+                foreach ($order->items as $item) {
+
+                    $product = $item->product;
+                    $product->stock += $item->qty;
+                    $product->save();
+                }
+
+            }
+
+            $order->status = $newStatus;
+            $order->save();
+
+        });
+
+        return response()->json(['success' => true]);
     }
 }
