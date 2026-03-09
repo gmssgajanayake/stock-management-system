@@ -28,7 +28,7 @@ class Order extends Model
         return $this->hasMany(OrderItem::class);
     }
 
-    // Auto-generate the SO-XXXXX order number before saving
+    // Auto-generate the SO-XXXXX order number
     protected static function boot()
     {
         parent::boot();
