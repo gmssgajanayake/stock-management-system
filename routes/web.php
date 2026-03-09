@@ -20,17 +20,25 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::view('profile', 'profile')->name('profile');
 
     // Products
-    Route::get('/products/list', [ProductController::class,'list']);
+    Route::get('/products/list', [ProductController::class, 'list']);
     Route::put('/products/{hash}/status', [ProductController::class, 'toggleStatus']);
     Route::resource('/products', ProductController::class);
 
     // Categories
     Route::post('/categories', [CategoryController::class, 'store'])->name('categories.store');
-    Route::get('/customers/list',[CustomerController::class,'list']);
+    Route::get('/customers/list', [CustomerController::class, 'list']);
 
     // Customers
     Route::resource('/customers', CustomerController::class);
 
     // Orders
-    Route::resource('/orders', OrderController::class);
+    //Route::resource('/orders', OrderController::class);
+    Route::prefix('orders')->group(function () {
+        Route::get('/', [OrderController::class, 'index'])->name('orders.index');
+        Route::get('/create', [OrderController::class, 'create'])->name('orders.create');
+        Route::post('/', [OrderController::class, 'store'])->name('orders.store');
+        Route::get('/{order}', [OrderController::class, 'show'])->name('orders.show');
+        Route::put('/{order}/status', [OrderController::class, 'updateStatus'])->name('orders.updateStatus');
+    });
+
 });

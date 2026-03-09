@@ -11,10 +11,9 @@
         <form id="editProductForm" enctype="multipart/form-data" class="space-y-6">
             @csrf
             @method('PUT')
-            <input type="hidden" name="id" value="{{ $product->id }}">
+            <input type="hidden" name="id" value="{{ $hash }}">
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">SKU</label>
                     <input type="text" name="sku" value="{{ $product->sku }}" required
@@ -119,45 +118,47 @@
     <script>
 
         // Show selected file names for better UX
-$("#file-upload").change(function() {
-    let fileCount = this.files.length;
-    let textDisplay = $("#file-preview-text");
+        $("#file-upload").change(function() {
+            let fileCount = this.files.length;
+            let textDisplay = $("#file-preview-text");
 
-    if (fileCount > 0) {
-        let fileNames = Array.from(this.files).map(f => f.name).join(', ');
-        textDisplay.text(`${fileCount} file(s) selected: ${fileNames}`).removeClass('hidden');
-    } else {
-        textDisplay.addClass('hidden');
-    }
-});
+            if (fileCount > 0) {
+                let fileNames = Array.from(this.files).map(f => f.name).join(', ');
+                textDisplay.text(`${fileCount} file(s) selected: ${fileNames}`).removeClass('hidden');
+            } else {
+                textDisplay.addClass('hidden');
+            }
+        });
 
-$("#editProductForm").submit(function (e) {
-    e.preventDefault();
-    let id = $("input[name=id]").val();
-    let formData = new FormData(this);
+        $("#editProductForm").submit(function (e) {
+            e.preventDefault();
+            let id = $("input[name=id]").val();
+            let formData = new FormData(this);
 
-    let submitBtn = $(this).find('button[type="submit"]');
-    let originalText = submitBtn.text();
-    submitBtn.text('Saving...').prop('disabled', true).addClass('opacity-70 cursor-not-allowed');
+            let submitBtn = $(this).find('button[type="submit"]');
+            let originalText = submitBtn.text();
+            submitBtn.text('Saving...').prop('disabled', true).addClass('opacity-70 cursor-not-allowed');
 
-    $.ajax({
-        url: `/products/${id}`,
-        type: "POST", // Keep as POST. Laravel's @method('PUT') inside the form handles the spoofing.
-        data: formData,
-        processData: false, // Required for files
-        contentType: false, // Required for files
-        // Removed the X-HTTP-Method-Override header to prevent PHP from dropping the $_FILES array
-        success: function (res) {
-            alert("Product updated successfully!");
-            window.location.href = "/products";
-        },
-        error: function (err) {
-            console.error(err);
-            alert("Error updating product. Please check the console.");
-            submitBtn.text(originalText).prop('disabled', false).removeClass('opacity-70 cursor-not-allowed');
-        }
-    });
-});
+
+            $.ajax({
+                url: `/products/${id}`,
+                type: "POST", // Keep as POST. Laravel's @method('PUT') inside the form handles the spoofing.
+                data: formData,
+                processData: false, // Required for files
+                contentType: false, // Required for files
+                // Removed the X-HTTP-Method-Override header to prevent PHP from dropping the $_FILES array
+                success: function (res) {
+                    alert("Product updated successfully!");
+                    window.location.href = "/products";
+                },
+                error: function (err) {
+                    console.error(err);
+                    alert("Error updating product. Please check the console.");
+                    submitBtn.text(originalText).prop('disabled', false).removeClass('opacity-70 cursor-not-allowed');
+                }
+            });
+        });
+
         // Handle "Add New Category"
         $("#categorySelect").change(function() {
             if ($(this).val() === "new") {
@@ -177,35 +178,6 @@ $("#editProductForm").submit(function (e) {
                     $(this).val(''); // reset selection if no name entered
                 }
             }
-        });
-
-        $("#editProductForm").submit(function (e) {
-            e.preventDefault();
-            let id = $("input[name=id]").val();
-            let formData = new FormData(this);
-
-            // Change button to loading state
-            let submitBtn = $(this).find('button[type="submit"]');
-            let originalText = submitBtn.text();
-            submitBtn.text('Saving...').prop('disabled', true).addClass('opacity-70 cursor-not-allowed');
-
-            $.ajax({
-                url: `/products/${id}`,
-                type: "POST",
-                data: formData,
-                processData: false,
-                contentType: false,
-                headers: { 'X-HTTP-Method-Override': 'PUT' },
-                success: function (res) {
-                    alert("Product updated successfully!");
-                    window.location.href = "/products";
-                },
-                error: function (err) {
-                    console.error(err);
-                    alert("Error updating product. Please check the console.");
-                    submitBtn.text(originalText).prop('disabled', false).removeClass('opacity-70 cursor-not-allowed');
-                }
-            });
         });
     </script>
 @endsection

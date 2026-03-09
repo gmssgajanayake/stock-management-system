@@ -1,4 +1,4 @@
-{{-- show.blade.php --}}
+{{-- create.blade.php --}}
 
 @extends('dashboard')
 
