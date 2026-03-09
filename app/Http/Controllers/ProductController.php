@@ -212,11 +212,23 @@ class ProductController extends Controller
         return view('products.create', compact('categories'));
     }
 
-    public function toggleStatus(Product $product)
+    public function toggleStatus($hash)
     {
+        $decoded = Hashids::decode($hash);
+
+        if (empty($decoded)) {
+            return response()->json(['error' => 'Invalid ID'], 400);
+        }
+
+        $id = $decoded[0];
+
+        $product = Product::findOrFail($id); // ✅ Use decoded ID
         $product->is_active = !$product->is_active; // flip status
         $product->save();
 
-        return response()->json(['success' => true, 'status' => $product->is_active]);
+        return response()->json([
+            'success' => true,
+            'status' => $product->is_active
+        ]);
     }
 }
