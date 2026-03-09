@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Customer;
 
+use Vinkla\Hashids\Facades\Hashids;
+
 class CustomerController extends Controller
 {
     // Display customers page
@@ -36,6 +38,12 @@ class CustomerController extends Controller
 
         $customers = $query->paginate($perPage);
 
+        // Add hash_id to each product
+        $customers->getCollection()->transform(function ($customer) {
+            $customer->hash_id = Hashids::encode($customer->id);
+            return $customer;
+        });
+
         return response()->json($customers);
     }
 
@@ -66,24 +74,50 @@ class CustomerController extends Controller
     }
 
     // Show single customer
-    public function show($id)
+    public function show($hash)
     {
+
+        $decoded = Hashids::decode($hash);
+
+        if (empty($decoded)) {
+            abort(404); // hash invalid
+        }
+
+        $id = $decoded[0];
         $customer = Customer::findOrFail($id);
 
         return view('customers.show', compact('customer'));
     }
 
     // Edit form
-    public function edit($id)
+    public function edit($hash)
     {
+
+        $decoded = Hashids::decode($hash);
+
+        if (empty($decoded)) {
+            abort(404); // hash invalid
+        }
+
+        $id = $decoded[0];
+
         $customer = Customer::findOrFail($id);
 
         return view('customers.edit', compact('customer'));
     }
 
     // Update customer
-    public function update(Request $request, $id)
+    public function update(Request $request, $hash)
     {
+
+        $decoded = Hashids::decode($hash);
+
+        if (empty($decoded)) {
+            abort(404); // hash invalid
+        }
+
+        $id = $decoded[0];
+
         $customer = Customer::findOrFail($id);
 
         $request->validate([
@@ -104,8 +138,16 @@ class CustomerController extends Controller
     }
 
     // Delete customer
-    public function destroy($id)
+    public function destroy($hash)
     {
+        $decoded = Hashids::decode($hash);
+
+        if (empty($decoded)) {
+            abort(404); // hash invalid
+        }
+
+        $id = $decoded[0];
+
         $customer = Customer::findOrFail($id);
 
         $customer->delete();

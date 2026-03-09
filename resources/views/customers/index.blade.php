@@ -19,7 +19,6 @@
         <table class="min-w-full">
             <thead class="bg-gray-50 text-left text-xs uppercase text-gray-500">
                 <tr>
-                    <th class="px-6 py-3 whitespace-nowrap">ID</th>
                     <th class="px-6 py-3 whitespace-nowrap">First Name</th>
                     <th class="px-6 py-3 whitespace-nowrap">Last Name</th>
                     <th class="px-6 py-3 whitespace-nowrap">Phone</th>
@@ -123,16 +122,15 @@
                     // Added whitespace-nowrap to all <td> elements
                     rows += `
                         <tr>
-                            <td class="px-6 py-4 whitespace-nowrap">${c.id}</td>
                             <td class="px-6 py-4 whitespace-nowrap">${c.first_name}</td>
                             <td class="px-6 py-4 whitespace-nowrap">${c.last_name ?? ''}</td>
                             <td class="px-6 py-4 whitespace-nowrap">${c.phone}</td>
                             <td class="px-6 py-4 whitespace-nowrap">${c.email ?? '-'}</td>
 
                             <td class="px-6 py-4 text-center whitespace-nowrap">
-                                <button class="showBtn px-3 py-1.5 text-xs font-medium bg-blue-50 text-blue-600 rounded hover:bg-blue-100 transition-colors" data-id="${c.id}">Show</button>
-                                <button class="editBtn px-3 py-1.5 text-xs font-medium bg-amber-50 text-amber-600 rounded hover:bg-amber-100 transition-colors" data-id="${c.id}">Edit</button>
-                                <button class="deleteBtn px-3 py-1.5 text-xs font-medium bg-red-50 text-red-600 rounded hover:bg-red-100 transition-colors" data-id="${c.id}">Delete</button>
+                                <button class="showBtn px-3 py-1.5 text-xs font-medium bg-blue-50 text-blue-600 rounded hover:bg-blue-100 transition-colors" data-id="${c.hash_id}">Show</button>
+                                <button class="editBtn px-3 py-1.5 text-xs font-medium bg-amber-50 text-amber-600 rounded hover:bg-amber-100 transition-colors" data-id="${c.hash_id}">Edit</button>
+                                <button class="deleteBtn px-3 py-1.5 text-xs font-medium bg-red-50 text-red-600 rounded hover:bg-red-100 transition-colors" data-id="${c.hash_id}">Delete</button>
                             </td>
                         </tr>
                         `

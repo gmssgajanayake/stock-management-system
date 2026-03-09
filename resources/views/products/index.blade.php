@@ -25,7 +25,6 @@
             <table class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     <tr>
-                        <th class="px-6 py-4">Id</th>
                         <th class="px-6 py-4">SKU</th>
                         <th class="px-6 py-4 sortBtn cursor-pointer hover:text-gray-900 transition-colors" data-sort="name">
                             Name <span class="text-gray-400">⬍</span>
@@ -138,39 +137,38 @@
                 search: search,
                 sort: sortColumn,
                 direction: sortDirection,
-                per_page:getPerPage()
+                per_page: getPerPage()
             }, function (response) {
 
                 let rows = "";
 
                 response.data.forEach(p => {
                     rows += `
-                        <tr class="hover:bg-gray-50 transition-colors duration-150 ease-in-out">
-                            <td class="px-6 py-4 whitespace-nowrap">${p.id}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-gray-500 font-medium">${p.sku}</td>
-                            <td class="px-6 py-4 whitespace-nowrap">${p.name}</td>
-                            <td class="px-6 py-4 whitespace-nowrap font-semibold text-gray-900">${p.price}</td>
-                            <td class="px-6 py-4 whitespace-nowrap">${p.stock}</td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <button class="statusBtn px-3 py-1 rounded-full text-xs text-white font-semibold tracking-wide shadow-sm transition-opacity hover:opacity-90"
-                                    data-id="${p.id}"
-                                    style="background-color: ${p.is_active ? '#16a34a' : '#dc2626'}">
-                                    ${p.is_active ? 'Active' : 'Deactive'}
-                                </button>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                ${p.main_image?.image_path ? `<img src="/storage/${p.main_image.image_path}" class="w-12 h-12 object-cover rounded-md shadow-sm border border-gray-100">` : '<span class="text-gray-400 text-xs italic">No image</span>'}
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-gray-600">${p.category?.name ?? '-'}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-center">
-                                <div class="flex items-center justify-center gap-2">
-                                    <button class="showBtn px-3 py-1.5 text-xs font-medium bg-blue-50 text-blue-600 rounded hover:bg-blue-100 transition-colors" data-id="${p.id}">Show</button>
-                                    <button class="editBtn px-3 py-1.5 text-xs font-medium bg-amber-50 text-amber-600 rounded hover:bg-amber-100 transition-colors" data-id="${p.id}">Edit</button>
-                                    <button class="deleteBtn px-3 py-1.5 text-xs font-medium bg-red-50 text-red-600 rounded hover:bg-red-100 transition-colors" data-id="${p.id}">Delete</button>
-                                </div>
-                            </td>
-                        </tr>
-                    `;
+                            <tr class="hover:bg-gray-50 transition-colors duration-150 ease-in-out">
+                                <td class="px-6 py-4 whitespace-nowrap text-gray-500 font-medium">${p.sku}</td>
+                                <td class="px-6 py-4 whitespace-nowrap">${p.name}</td>
+                                <td class="px-6 py-4 whitespace-nowrap font-semibold text-gray-900">${p.price}</td>
+                                <td class="px-6 py-4 whitespace-nowrap">${p.stock}</td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <button class="statusBtn px-3 py-1 rounded-full text-xs text-white font-semibold tracking-wide shadow-sm transition-opacity hover:opacity-90"
+                                        data-id="${p.hash_id}"
+                                        style="background-color: ${p.is_active ? '#16a34a' : '#dc2626'}">
+                                        ${p.is_active ? 'Active' : 'Deactive'}
+                                    </button>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    ${p.main_image?.image_path ? `<img src="/storage/${p.main_image.image_path}" class="w-12 h-12 object-cover rounded-md shadow-sm border border-gray-100">` : '<span class="text-gray-400 text-xs italic">No image</span>'}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-gray-600">${p.category?.name ?? '-'}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-center">
+                                    <div class="flex items-center justify-center gap-2">
+                                        <button class="showBtn px-3 py-1.5 text-xs font-medium bg-blue-50 text-blue-600 rounded hover:bg-blue-100 transition-colors" data-id="${p.hash_id}">Show</button>
+                                        <button class="editBtn px-3 py-1.5 text-xs font-medium bg-amber-50 text-amber-600 rounded hover:bg-amber-100 transition-colors" data-id="${p.hash_id}">Edit</button>
+                                        <button class="deleteBtn px-3 py-1.5 text-xs font-medium bg-red-50 text-red-600 rounded hover:bg-red-100 transition-colors" data-id="${p.hash_id}">Delete</button>
+                                    </div>
+                                </td>
+                            </tr>
+                        `;
                 });
 
                 $("#productTable").html(rows);
