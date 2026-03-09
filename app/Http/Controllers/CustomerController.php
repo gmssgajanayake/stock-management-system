@@ -3,68 +3,113 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
-use Illuminate\Http\RedirectResponse;
-
 use App\Models\Customer;
-use Illuminate\View\View;
 
 class CustomerController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index(): View
+    // Display customers page
+    public function index()
     {
-        $customers = Customer::all();
         return view('customers.index');
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
+    // AJAX list
+    public function list(Request $request)
+    {
+        $query = Customer::query();
+
+        // Search
+        if ($request->search) {
+
+            $search = strtolower($request->search);
+
+            $query->where(function ($q) use ($search) {
+                $q->whereRaw('LOWER(first_name) LIKE ?', ["%{$search}%"])
+                    ->orWhereRaw('LOWER(last_name) LIKE ?', ["%{$search}%"])
+                    ->orWhereRaw('LOWER(phone) LIKE ?', ["%{$search}%"])
+                    ->orWhereRaw('LOWER(email) LIKE ?', ["%{$search}%"]);
+            });
+
+        }
+
+        $perPage = $request->per_page ?? 6;
+
+        $customers = $query->paginate($perPage);
+
+        return response()->json($customers);
+    }
+
+    // Show create form
     public function create()
     {
-        //
+        return view('customers.create');
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
+    // Store new customer
     public function store(Request $request)
     {
-        //
+        $request->validate([
+            'first_name' => 'required|string|max:255',
+            'last_name' => 'nullable|string|max:255',
+            'phone' => 'required|string|max:20',
+            'email' => 'nullable|email|unique:customers,email'
+        ]);
+
+        $customer = Customer::create($request->only([
+            'first_name',
+            'last_name',
+            'phone',
+            'email'
+        ]));
+
+        return response()->json($customer);
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
+    // Show single customer
+    public function show($id)
     {
-        //
+        $customer = Customer::findOrFail($id);
+
+        return view('customers.show', compact('customer'));
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
+    // Edit form
+    public function edit($id)
     {
-        //
+        $customer = Customer::findOrFail($id);
+
+        return view('customers.edit', compact('customer'));
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
+    // Update customer
+    public function update(Request $request, $id)
     {
-        //
+        $customer = Customer::findOrFail($id);
+
+        $request->validate([
+            'first_name' => 'required|string|max:255',
+            'last_name' => 'nullable|string|max:255',
+            'phone' => 'required|string|max:20',
+            'email' => 'nullable|email|unique:customers,email,' . $id
+        ]);
+
+        $customer->update($request->only([
+            'first_name',
+            'last_name',
+            'phone',
+            'email'
+        ]));
+
+        return response()->json($customer);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
+    // Delete customer
+    public function destroy($id)
     {
-        //
+        $customer = Customer::findOrFail($id);
+
+        $customer->delete();
+
+        return response()->json(['success' => true]);
     }
 }
