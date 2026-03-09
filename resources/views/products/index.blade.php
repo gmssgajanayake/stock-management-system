@@ -107,13 +107,19 @@
 
             // Toggle Active Status
             $(document).on("click", ".statusBtn", function () {
+
+
                 let btn = $(this);
-                let id = btn.data("id");
+                let hash_id = btn.data("id");
+                console.log(hash_id);
+
+
                 $.ajax({
-                    url: `/products/${id}/status`,
+                    url: `/products/${hash_id}/status`,
                     type: "PUT",
                     data: { _token: "{{ csrf_token() }}" },
                     success: function (res) {
+
                         if (res.status) {
                             btn.text('Active').css('background-color', '#16a34a'); // Tailwind green-600
                         } else {

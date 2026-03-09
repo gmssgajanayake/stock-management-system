@@ -21,7 +21,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Products
     Route::get('/products/list', [ProductController::class,'list']);
-    Route::put('/products/{product}/status', [ProductController::class, 'toggleStatus']);
+    Route::put('/products/{hash}/status', [ProductController::class, 'toggleStatus']);
     Route::resource('/products', ProductController::class);
 
     // Categories
