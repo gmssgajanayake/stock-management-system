@@ -1,3 +1,4 @@
+{{-- custmoers.index --}}
 @extends('dashboard')
 
 @section('content-title')
