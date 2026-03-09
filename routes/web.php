@@ -26,6 +26,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Categories
     Route::post('/categories', [CategoryController::class, 'store'])->name('categories.store');
+    Route::get('/customers/list',[CustomerController::class,'list']);
 
     // Customers
     Route::resource('/customers', CustomerController::class);

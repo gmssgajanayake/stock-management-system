@@ -22,7 +22,7 @@ class ProductController extends Controller
 
         // Search by name
         if ($request->search) {
-            $query->where('name', 'like', '%' . $request->search . '%');
+            $query->whereRaw('LOWER(name) LIKE ?', ['%' . strtolower($request->search) . '%']);
         }
 
         // Sorting
@@ -45,7 +45,9 @@ class ProductController extends Controller
             $query->where('price', '<=', $request->max_price);
         }
 
-        $products = $query->paginate(6);
+        $perPage = $request->per_page ?? 6;
+
+        $products = $query->paginate($perPage);
 
         return response()->json($products);
     }
@@ -87,11 +89,11 @@ class ProductController extends Controller
     }
 
     // Show single product
-public function show($id)
-{
-    $product = Product::with(['mainImage', 'images', 'category'])->findOrFail($id);
-    return view('products.show', compact('product'));
-}
+    public function show($id)
+    {
+        $product = Product::with(['mainImage', 'images', 'category'])->findOrFail($id);
+        return view('products.show', compact('product'));
+    }
     // Update product
     public function update(Request $request, $id)
     {

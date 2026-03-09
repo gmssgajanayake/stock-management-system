@@ -1,3 +1,5 @@
+{{-- show.blade.php --}}
+
 @extends('dashboard')
 
 @section('content-title')

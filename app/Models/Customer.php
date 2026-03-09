@@ -9,9 +9,10 @@ class Customer extends Model
 {
     use HasFactory;
     protected $fillable = [
-        'name',
+        'first_name',
+        'last_name',
         'phone',
-        'email',
+        'email'
     ];
 
     // A Customer can have multiple Orders
