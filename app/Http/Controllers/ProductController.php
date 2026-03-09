@@ -7,6 +7,8 @@ use App\Models\Product;
 use App\Models\ProductImage;
 use App\Models\Category;
 
+use Vinkla\Hashids\Facades\Hashids;
+
 class ProductController extends Controller
 {
     // Display the products page (blade)
@@ -15,12 +17,13 @@ class ProductController extends Controller
         return view('products.index'); // blade handles AJAX data
     }
 
+
     // Fetch products for AJAX
     public function list(Request $request)
     {
         $query = Product::with(['category', 'mainImage']);
 
-        // Search by name
+        // Search
         if ($request->search) {
             $query->whereRaw('LOWER(name) LIKE ?', ['%' . strtolower($request->search) . '%']);
         }
@@ -30,17 +33,15 @@ class ProductController extends Controller
             $query->orderBy($request->sort, $request->direction ?? 'asc');
         }
 
-        // Filter by category
+        // Filters
         if ($request->category_id) {
             $query->where('category_id', $request->category_id);
         }
 
-        // Filter by minimum price
         if ($request->min_price) {
             $query->where('price', '>=', $request->min_price);
         }
 
-        // Filter by maximum price
         if ($request->max_price) {
             $query->where('price', '<=', $request->max_price);
         }
@@ -49,11 +50,24 @@ class ProductController extends Controller
 
         $products = $query->paginate($perPage);
 
+        // Add hash_id to each product
+        $products->getCollection()->transform(function ($product) {
+            $product->hash_id = Hashids::encode($product->id);
+            return $product;
+        });
+
         return response()->json($products);
     }
 
-    public function edit($id)
+    public function edit($hash)
     {
+        $decoded = Hashids::decode($hash);
+
+        if (empty($decoded)) {
+            abort(404); // hash invalid
+        }
+
+        $id = $decoded[0];
         $product = Product::with('images')->findOrFail($id);
         $categories = Category::all();
         return view('products.edit', compact('product', 'categories'));
@@ -88,15 +102,33 @@ class ProductController extends Controller
         return response()->json($product);
     }
 
+
     // Show single product
-    public function show($id)
+    public function show($hash)
     {
+        $decoded = Hashids::decode($hash);
+
+        if (empty($decoded)) {
+            abort(404); // hash invalid
+        }
+
+        $id = $decoded[0];
+
         $product = Product::with(['mainImage', 'images', 'category'])->findOrFail($id);
         return view('products.show', compact('product'));
     }
     // Update product
-    public function update(Request $request, $id)
+    public function update(Request $request, $hash)
     {
+
+        $decoded = Hashids::decode($hash);
+
+        if (empty($decoded)) {
+            abort(404); // hash invalid
+        }
+
+        $id = $decoded[0];
+
         $product = Product::findOrFail($id);
 
         $request->validate([
@@ -152,8 +184,16 @@ class ProductController extends Controller
     }
 
     // Delete product
-    public function destroy($id)
+    public function destroy($hash)
     {
+        $decoded = Hashids::decode($hash);
+
+        if (empty($decoded)) {
+            abort(404); // hash invalid
+        }
+
+        $id = $decoded[0];
+
         $product = Product::findOrFail($id);
 
         foreach ($product->images as $image) {
