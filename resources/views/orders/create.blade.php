@@ -2,7 +2,7 @@
 
 @section('content-title')
     <h1 class="text-2xl font-bold mb-4 text-gray-800">
-        {{ isset($order) ? 'Edit Order' : 'Create Order' }}
+        Create Order
     </h1>
 @endsection
 

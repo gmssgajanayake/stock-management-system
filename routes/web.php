@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\BulkUploadController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProductController;
@@ -34,11 +35,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Orders
     //Route::resource('/orders', OrderController::class);
     Route::prefix('orders')->group(function () {
+         Route::resource('/bulk-upload',BulkUploadController::class);
         Route::get('/', [OrderController::class, 'index'])->name('orders.index');
         Route::get('/create', [OrderController::class, 'create'])->name('orders.create');
         Route::post('/', [OrderController::class, 'store'])->name('orders.store');
         Route::get('/{order}', [OrderController::class, 'show'])->name('orders.show');
         Route::put('/{order}/status', [OrderController::class, 'updateStatus'])->name('orders.updateStatus');
+
     });
+
+
 
 });
