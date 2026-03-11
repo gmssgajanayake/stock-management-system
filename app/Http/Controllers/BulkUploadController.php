@@ -31,49 +31,57 @@ class BulkUploadController extends Controller
             'csv_file' => 'required|file|mimes:csv,txt',
         ]);
 
-        $path = $request->file('csv_file')->getRealPath();
+        try {
+            $path = $request->file('csv_file')->getRealPath();
 
-        $rows = array_map('str_getcsv', file($path));
+            $rows = array_map('str_getcsv', file($path));
 
-        $header = array_shift($rows);
-
-        $valid = [];
-        $invalid = [];
-
-        foreach ($rows as $row) {
-
-            // Avoid empty file
+            // Check if CSV is empty
             if (empty($rows)) {
                 return back()->withErrors(['csv_file' => 'CSV is empty!']);
             }
 
-            $data = array_combine($header, $row);
+            $header = array_shift($rows);
 
-            $customerParts = explode(' ', $data['customer_name'], 2);
-            $data['first_name'] = $customerParts[0] ?? null;
-            $data['last_name'] = $customerParts[1] ?? null;
+            $valid = [];
+            $invalid = [];
 
-            $validator = Validator::make($data, [
-                'first_name' => 'required|exists:customers,first_name',
-                'last_name' => 'required|exists:customers,last_name',
-                'sku' => 'required|exists:products,sku',
-                'qty' => 'required|integer|min:1',
-                'discount' => 'required|numeric|min:0',
-                'tax' => 'required|numeric|min:0|max:100',
+            foreach ($rows as $row) {
+                $data = array_combine($header, $row);
+
+                // Split full name into first and last name
+                $customerParts = explode(' ', $data['customer_name'], 2);
+                $data['first_name'] = $customerParts[0] ?? null;
+                $data['last_name'] = $customerParts[1] ?? null;
+
+                $validator = Validator::make($data, [
+                    'first_name' => 'required|exists:customers,first_name',
+                    'last_name' => 'required|exists:customers,last_name',
+                    'sku' => 'required|exists:products,sku',
+                    'qty' => 'required|integer|min:1',
+                    'discount' => 'required|numeric|min:0',
+                    'tax' => 'required|numeric|min:0|max:100',
+                ]);
+
+                if ($validator->fails()) {
+                    $data['errors'] = $validator->errors()->all();
+                    $invalid[] = $data;
+                } else {
+                    $valid[] = $data;
+                }
+            }
+
+            return response()->json([
+                'valid' => $valid,
+                'invalid' => $invalid,
             ]);
 
-            if ($validator->fails()) {
-
-                $data['errors'] = $validator->errors();
-                $invalid[] = $data;
-            } else {
-                $valid[] = $data;
-            }
+        } catch (Exception $e) {
+            // Catch any unexpected error and return back with message
+            return response()->json([
+                'error' => 'An error occurred while processing the CSV: '.$e->getMessage(),
+            ], 500);
         }
-
-        dd($valid, $invalid); // now shows all rows after processing
-
-        return view('orders.bulk-review', compact('valid', 'invalid'));
     }
 
     /**
@@ -129,6 +137,37 @@ class BulkUploadController extends Controller
         return response(stream_get_contents($handle), 200, [
             'Content-Type' => 'text/csv',
             'Content-Disposition' => "attachment; filename=$fileName",
+        ]);
+    }
+
+    public function revalidate(Request $request)
+    {
+        $rows = $request->rows;
+
+        $valid = [];
+        $invalid = [];
+
+        foreach ($rows as $data) {
+
+            $validator = Validator::make($data, [
+                'customer_name' => 'required',
+                'sku' => 'required|exists:products,sku',
+                'qty' => 'required|integer|min:1',
+                'discount' => 'required|numeric|min:0',
+                'tax' => 'required|numeric|min:0|max:100',
+            ]);
+
+            if ($validator->fails()) {
+                $data['errors'] = $validator->errors()->all();
+                $invalid[] = $data;
+            } else {
+                $valid[] = $data;
+            }
+        }
+
+        return response()->json([
+            'valid' => $valid,
+            'invalid' => $invalid,
         ]);
     }
 }
