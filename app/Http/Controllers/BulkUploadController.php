@@ -159,7 +159,6 @@ class BulkUploadController extends Controller
 
         foreach ($rows as $data) {
 
-            // Split customer_name into first and last
             $customerParts = explode(' ', trim($data['customer_name']), 2);
             $firstName = $customerParts[0] ?? null;
             $lastName = $customerParts[1] ?? null;
@@ -171,7 +170,6 @@ class BulkUploadController extends Controller
                         $exists = \App\Models\Customer::where('first_name', $firstName)
                             ->where('last_name', $lastName)
                             ->exists();
-
                         if (! $exists) {
                             $fail('Customer not found');
                         }
@@ -184,7 +182,12 @@ class BulkUploadController extends Controller
             ]);
 
             if ($validator->fails()) {
-                $data['errors'] = $validator->errors()->toArray();
+                $errors = [];
+                foreach ($validator->errors()->toArray() as $field => $messages) {
+                    $errors[$field] = $messages;
+                }
+                $data['errors'] = $errors;
+                $data['tax']='';
                 $invalid[] = $data;
             } else {
                 $valid[] = $data;
@@ -195,5 +198,31 @@ class BulkUploadController extends Controller
             'valid' => $valid,
             'invalid' => $invalid,
         ]);
+    }
+
+    public function processOrders(Request $request)
+    {
+        $rows = $request->rows; // JSON array of valid rows
+        
+        // Dispatch queue
+        ProcessBulkOrders::dispatch($rows);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Orders are being processed in the background!',
+        ]);
+    }
+
+    public function results(Request $request)
+    {
+        $file = $request->file;
+
+        if (! Storage::exists('bulk_upload_results/'.$file.'.json')) {
+            return response()->json(['ready' => false]);
+        }
+
+        $results = json_decode(Storage::get('bulk_upload_results/'.$file.'.json'), true);
+
+        return response()->json(['ready' => true, 'results' => $results]);
     }
 }

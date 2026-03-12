@@ -158,104 +158,115 @@
             }
         });
 
-        function renderTables(data) {
+        document.addEventListener('click', function(e) {
+            if (e.target.id === 'processOrdersBtn') {
 
+                fetch('/orders/bulk-upload/process', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value
+                        },
+                        body: JSON.stringify({
+                            rows: validRows
+                        })
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success) {
+                            alert('Orders are being processed in the background!');
+                            // Optionally, disable the button after click
+                            e.target.disabled = true;
+                        }
+                    })
+                    .catch(err => {
+                        console.error(err);
+                        alert('Failed to process orders.');
+                    });
+
+            }
+        });
+
+        function checkResults(filePath) {
+            fetch(`/orders/bulk-upload/results?file=${filePath}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (!data.ready) {
+                        setTimeout(() => checkResults(filePath), 2000);
+                        return;
+                    }
+
+                    renderTables(data.results);
+                });
+        }
+
+        function renderTables(data) {
             const container = document.getElementById('uploadResult');
             container.innerHTML = '';
 
             // VALID TABLE
             if (data.valid && data.valid.length > 0) {
-
                 let validHTML = '<h3 class="font-bold mb-2 text-green-600">Valid Rows</h3>';
                 validHTML += '<table class="border w-full mb-6"><thead><tr>';
-
                 Object.keys(data.valid[0]).forEach(col => {
-                    if (col !== 'errors') {
-                        validHTML += `<th class="border px-2 py-1">${col}</th>`;
-                    }
+                    if (col !== 'errors') validHTML += `<th class="border px-2 py-1">${col}</th>`;
                 });
-
                 validHTML += '</tr></thead><tbody>';
-
                 data.valid.forEach(row => {
-
                     validHTML += '<tr>';
-
                     Object.keys(row).forEach(col => {
-
                         if (col === 'errors') return;
-
                         validHTML += `<td class="border px-2 py-1">${row[col]}</td>`;
                     });
-
                     validHTML += '</tr>';
                 });
-
                 validHTML += '</tbody></table>';
-
                 container.innerHTML += validHTML;
             }
 
             // INVALID TABLE
             if (data.invalid && data.invalid.length > 0) {
-
                 let invalidHTML = '<h3 class="font-bold mb-2 text-red-600">Invalid Rows</h3>';
                 invalidHTML += '<table id="invalidTable" class="border w-full"><thead><tr>';
-
                 Object.keys(data.invalid[0]).forEach(col => {
-                    if (col !== 'errors') {
-                        invalidHTML += `<th class="border px-2 py-1">${col}</th>`;
-                    }
+                    if (col !== 'errors') invalidHTML += `<th class="border px-2 py-1">${col}</th>`;
                 });
-
+                invalidHTML += `<th class="border px-2 py-1">Actions</th>`;
                 invalidHTML += '</tr></thead><tbody>';
 
                 data.invalid.forEach((row, index) => {
-
                     invalidHTML += `<tr data-row="${index}">`;
-
                     Object.keys(row).forEach(col => {
-
                         if (col === 'errors') return;
-
-                        const hasError = row.errors && Object.keys(row.errors).includes(col);
+                        const hasError = row.errors && row.errors[col];
                         const errorText = hasError ? row.errors[col].join(', ') : '';
-
                         invalidHTML += `
-                <td class="border px-2 py-1">
-                    <input 
-                        type="text"
-                        value="${row[col]}"
-                        title="${errorText}"
-                        data-field="${col}"
-                        class="w-full p-1 border ${hasError ? 'border-red-500 bg-red-50' : 'border-gray-300'}"
-                    >
-                </td>
-                `;
+                    <td class="border px-2 py-1">
+                        <input type="text"
+                               value="${row[col]}"
+                               title="${errorText}"
+                               data-field="${col}"
+                               class="w-full p-1 border ${hasError ? 'border-red-500 bg-red-50' : 'border-gray-300'}">
+                    </td>`;
                     });
 
-                    // Add Delete button
                     invalidHTML += `
-                    <td class="border px-2 py-1">
-                        <button class="deleteRowBtn bg-red-600 text-white px-2 py-1 rounded">
-                            Delete
-                        </button>
-                    </td>
-                `;
-
+                <td class="border px-2 py-1">
+                    <button class="deleteRowBtn bg-red-600 text-white px-2 py-1 rounded">Delete</button>
+                </td>`;
                     invalidHTML += '</tr>';
                 });
 
                 invalidHTML += '</tbody></table>';
-
-                invalidHTML += `
-        <button id="revalidateBtn"
-            class="mt-4 bg-orange-600 text-white px-4 py-2 rounded">
-            Revalidate
-        </button>
-        `;
-
+                invalidHTML +=
+                    `<button id="revalidateBtn" class="mt-4 bg-orange-600 text-white px-4 py-2 rounded">Revalidate</button>`;
                 container.innerHTML += invalidHTML;
+            }
+
+            // Show Process Orders button only if no invalid rows
+            if (!data.invalid || data.invalid.length === 0 && data.valid && data.valid.length > 0) {
+                container.innerHTML +=
+                    `<button id="processOrdersBtn" class="mt-4 bg-green-700 text-white px-4 py-2 rounded">Process Orders</button>`;
             }
         }
     </script>
