@@ -35,13 +35,18 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Orders
     // Route::resource('/orders', OrderController::class);
     Route::prefix('orders')->group(function () {
+        // Bulk order processing
         Route::resource('/bulk-upload', BulkUploadController::class);
         Route::get('/template', [BulkUploadController::class, 'downloadTemplate'])
             ->name('orders.template');
         Route::post('/bulk-upload', [BulkUploadController::class, 'store'])
             ->name('orders.bulk-upload.store');
         Route::post('/bulk-upload/revalidate', [BulkUploadController::class, 'revalidate']);
+        Route::post('/bulk-upload/process', [BulkUploadController::class, 'processOrders'])
+            ->name('orders.bulk-upload.process');
+        Route::get('/bulk-upload/results', [BulkUploadController::class, 'results'])->name('orders.bulk-upload.results');
 
+        // Single order place
         Route::get('/', [OrderController::class, 'index'])->name('orders.index');
         Route::get('/create', [OrderController::class, 'create'])->name('orders.create');
         Route::post('/', [OrderController::class, 'store'])->name('orders.store');

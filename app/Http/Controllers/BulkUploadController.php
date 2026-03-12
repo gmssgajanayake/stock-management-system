@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use App\Jobs\ProcessBulkOrders;
 
 class BulkUploadController extends Controller
 {
@@ -152,48 +153,85 @@ class BulkUploadController extends Controller
 
     public function revalidate(Request $request)
     {
-        $rows = $request->rows;
+        try {
 
-        $valid = [];
-        $invalid = [];
+            $rows = $request->rows;
 
-        foreach ($rows as $data) {
+            $valid = [];
+            $invalid = [];
 
-            // Split customer_name into first and last
-            $customerParts = explode(' ', trim($data['customer_name']), 2);
-            $firstName = $customerParts[0] ?? null;
-            $lastName = $customerParts[1] ?? null;
+            foreach ($rows as $data) {
 
-            $validator = Validator::make($data, [
-                'customer_name' => [
-                    'required',
-                    function ($attribute, $value, $fail) use ($firstName, $lastName) {
-                        $exists = \App\Models\Customer::where('first_name', $firstName)
-                            ->where('last_name', $lastName)
-                            ->exists();
+                // Split customer name
+                $customerParts = explode(' ', trim($data['customer_name']), 2);
+                $firstName = $customerParts[0] ?? null;
+                $lastName = $customerParts[1] ?? null;
 
-                        if (! $exists) {
-                            $fail('Customer not found');
-                        }
-                    },
-                ],
-                'sku' => 'required|exists:products,sku',
-                'qty' => 'required|integer|min:1',
-                'discount' => 'required|numeric|min:0',
-                'tax' => 'required|numeric|min:0|max:100',
-            ]);
+                $validator = Validator::make($data, [
+                    'customer_name' => [
+                        'required',
+                        function ($attribute, $value, $fail) use ($firstName, $lastName) {
 
-            if ($validator->fails()) {
-                $data['errors'] = $validator->errors()->toArray();
-                $invalid[] = $data;
-            } else {
-                $valid[] = $data;
+                            $exists = \App\Models\Customer::where('first_name', $firstName)
+                                ->where('last_name', $lastName)
+                                ->exists();
+
+                            if (! $exists) {
+                                $fail('Customer not found');
+                            }
+                        },
+                    ],
+                    'sku' => 'required|exists:products,sku',
+                    'qty' => 'required|integer|min:1',
+                    'discount' => 'required|numeric|min:0',
+                    'tax' => 'required|numeric|min:0|max:100',
+                ]);
+
+                if ($validator->fails()) {
+
+                    $data['tax'] = '';
+                    $data['errors'] = $validator->errors()->toArray();
+                    $invalid[] = $data;
+
+                } else {
+
+                    $valid[] = $data;
+
+                }
             }
+
+            return response()->json([
+                'valid' => $valid,
+                'invalid' => $invalid,
+            ]);
+        } catch (e) {
+            dd(e);
         }
+    }
+
+    public function processOrders(Request $request)
+    {
+        $rows = $request->rows; // JSON array of valid rows
+
+        // Dispatch queue
+        ProcessBulkOrders::dispatch($rows);
 
         return response()->json([
-            'valid' => $valid,
-            'invalid' => $invalid,
+            'success' => true,
+            'message' => 'Orders are being processed in the background!',
         ]);
+    }
+
+    public function results(Request $request)
+    {
+        $file = $request->file;
+
+        if (! Storage::exists('bulk_upload_results/'.$file.'.json')) {
+            return response()->json(['ready' => false]);
+        }
+
+        $results = json_decode(Storage::get('bulk_upload_results/'.$file.'.json'), true);
+
+        return response()->json(['ready' => true, 'results' => $results]);
     }
 }
