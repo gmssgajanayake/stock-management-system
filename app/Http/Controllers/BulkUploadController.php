@@ -168,7 +168,8 @@ class BulkUploadController extends Controller
             ]);
 
             if ($validator->fails()) {
-                $data['errors'] = $validator->errors()->all();
+                $data['tax']='';
+                $data['errors'] = $validator->errors()->toArray();
                 $invalid[] = $data;
             } else {
                 $valid[] = $data;
