@@ -104,10 +104,6 @@
                     })
                     .then(res => res.json())
                     .then(data => {
-
-                        console.log(data);
-
-
                         // merge new valid rows with previous valid rows
                         validRows = [...validRows, ...data.valid];
 
@@ -117,50 +113,14 @@
                         });
                     });
             }
-        });
 
-        document.addEventListener('click', function(e) {
             if (e.target.classList.contains('deleteRowBtn')) {
                 const row = e.target.closest('tr');
                 row.remove(); // remove row from table
             }
 
-            if (e.target.id === 'revalidateBtn') {
-                const rows = document.querySelectorAll('#uploadResult tbody tr');
-                let correctedData = [];
-
-                rows.forEach(row => {
-                    let obj = {};
-                    row.querySelectorAll('input').forEach(input => {
-                        obj[input.dataset.field] = input.value;
-                    });
-                    correctedData.push(obj);
-                });
-
-                fetch('/orders/bulk-upload/revalidate', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value
-                        },
-                        body: JSON.stringify({
-                            rows: correctedData
-                        })
-                    })
-                    .then(res => res.json())
-                    .then(data => {
-                        validRows = [...validRows, ...data.valid];
-                        renderTables({
-                            valid: validRows,
-                            invalid: data.invalid
-                        });
-                    });
-            }
-        });
-
-        document.addEventListener('click', function(e) {
-            if (e.target.id === 'processOrdersBtn') {
-
+             if (e.target.id === 'processOrdersBtn') {
+            
                 fetch('/orders/bulk-upload/process', {
                         method: 'POST',
                         headers: {
@@ -171,8 +131,13 @@
                             rows: validRows
                         })
                     })
-                    .then(res => res.json())
+                    .then(res => {
+                        if (!res.ok) throw new Error("Server error");
+                        return res.json();
+                    })
                     .then(data => {
+                        // console.log(data);
+
                         if (data.success) {
                             alert('Orders are being processed in the background!');
                             // Optionally, disable the button after click
