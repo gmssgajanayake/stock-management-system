@@ -33,6 +33,8 @@
 
 @section('scripts')
     <script>
+        let validRows = [];
+
         document.getElementById('csvUploadForm').addEventListener('submit', function(e) {
             e.preventDefault();
 
@@ -48,91 +50,21 @@
                 })
                 .then(response => response.json())
                 .then(data => {
-                    const container = document.getElementById('uploadResult');
-                    container.innerHTML = '';
 
                     if (data.error) {
-                        container.innerHTML = `<div class="text-red-600">${data.error}</div>`;
+                        document.getElementById('uploadResult').innerHTML =
+                            `<div class="text-red-600">${data.error}</div>`;
                         return;
                     }
 
-                    // Valid rows table
-                    if (data.valid.length > 0) {
-                        let validHTML = '<h3 class="font-bold mb-2 text--600">Valid Rows</h3>';
-                        validHTML += '<table class="border w-full mb-4"><thead><tr>';
-                        Object.keys(data.valid[0]).forEach(col => {
-                            if (col !== 'errors') validHTML +=
-                                `<th class="border px-2 py-1">${col}</th>`;
-                        });
-                        validHTML += '</tr></thead><tbody>';
-                        data.valid.forEach(row => {
-                            validHTML += '<tr>';
-                            Object.keys(row).forEach(col => {
-                                if (col !== 'errors') validHTML +=
-                                    `<td class="border px-2 py-1">${row[col]}</td>`;
-                            });
-                            validHTML += '</tr>';
-                        });
-                        validHTML += '</tbody></table>';
-                        container.innerHTML += validHTML;
-                    }
+                    // store valid rows
+                    validRows = data.valid;
 
-                    // Invalid rows table
-                    if (data.invalid.length > 0) {
+                    renderTables({
+                        valid: validRows,
+                        invalid: data.invalid
+                    });
 
-                        let invalidHTML = '<h3 class="font-bold mb-2 text-red-600">Invalid Rows</h3>';
-
-                        invalidHTML += '<table class="border w-full">';
-                        invalidHTML += '<thead><tr>';
-
-                        Object.keys(data.invalid[0]).forEach(col => {
-                            if (col !== 'errors') {
-                                invalidHTML += `<th class="border px-2 py-1">${col}</th>`;
-                            }
-                        });
-
-                        invalidHTML += '</tr></thead><tbody>';
-
-                        data.invalid.forEach((row, index) => {
-
-                            invalidHTML += `<tr data-row="${index}">`;
-
-                            Object.keys(row).forEach(col => {
-
-                                if (col === 'errors') return;
-
-                                // const fieldName = col.replaceAll('_', ' ').toLowerCase();
-
-                                const hasError = row.errors && row.errors[col];
-
-                               
-
-                                invalidHTML += `
-                                    <td class="border px-2 py-1">
-                                        <input 
-                                            type="text"
-                                            value="${row[col]}"
-                                            data-field="${col}"
-                                            class="w-full p-1 border ${hasError ? 'border-red-500 bg-red-50' : 'border-gray-300'}"
-                                        >
-                                    </td>
-                                    `;
-                            });
-
-                            invalidHTML += '</tr>';
-                        });
-
-                        invalidHTML += '</tbody></table>';
-
-                        invalidHTML += `
-                            <button id="revalidateBtn"
-                                class="mt-4 bg-orange-600 text-white px-4 py-2 rounded">
-                                Revalidate
-                            </button>
-                        `;
-
-                        container.innerHTML += invalidHTML;
-                    }
                 })
                 .catch(error => {
                     console.error(error);
@@ -144,8 +76,7 @@
 
             if (e.target.id === 'revalidateBtn') {
 
-                const rows = document.querySelectorAll('#uploadResult tbody tr');
-                
+                const rows = document.querySelectorAll('#invalidTable tbody tr');
 
                 let correctedData = [];
 
@@ -173,9 +104,111 @@
                     })
                     .then(res => res.json())
                     .then(data => {
-                        console.log('Revalidated', data);
+
+                        console.log(data);
+
+
+                        // merge new valid rows with previous valid rows
+                        validRows = [...validRows, ...data.valid];
+
+                        renderTables({
+                            valid: validRows,
+                            invalid: data.invalid
+                        });
                     });
             }
         });
+
+        function renderTables(data) {
+
+            const container = document.getElementById('uploadResult');
+            container.innerHTML = '';
+
+            // VALID TABLE
+            if (data.valid && data.valid.length > 0) {
+
+                let validHTML = '<h3 class="font-bold mb-2 text-green-600">Valid Rows</h3>';
+                validHTML += '<table class="border w-full mb-6"><thead><tr>';
+
+                Object.keys(data.valid[0]).forEach(col => {
+                    if (col !== 'errors') {
+                        validHTML += `<th class="border px-2 py-1">${col}</th>`;
+                    }
+                });
+
+                validHTML += '</tr></thead><tbody>';
+
+                data.valid.forEach(row => {
+
+                    validHTML += '<tr>';
+
+                    Object.keys(row).forEach(col => {
+
+                        if (col === 'errors') return;
+
+                        validHTML += `<td class="border px-2 py-1">${row[col]}</td>`;
+                    });
+
+                    validHTML += '</tr>';
+                });
+
+                validHTML += '</tbody></table>';
+
+                container.innerHTML += validHTML;
+            }
+
+            // INVALID TABLE
+            if (data.invalid && data.invalid.length > 0) {
+
+                let invalidHTML = '<h3 class="font-bold mb-2 text-red-600">Invalid Rows</h3>';
+                invalidHTML += '<table id="invalidTable" class="border w-full"><thead><tr>';
+
+                Object.keys(data.invalid[0]).forEach(col => {
+                    if (col !== 'errors') {
+                        invalidHTML += `<th class="border px-2 py-1">${col}</th>`;
+                    }
+                });
+
+                invalidHTML += '</tr></thead><tbody>';
+
+                data.invalid.forEach((row, index) => {
+
+                    invalidHTML += `<tr data-row="${index}">`;
+
+                    Object.keys(row).forEach(col => {
+
+                        if (col === 'errors') return;
+
+                        const hasError = row.errors && Object.keys(row.errors).includes(col);
+                        const errorText = hasError ? row.errors[col].join(', ') : '';
+
+                        invalidHTML += `
+                <td class="border px-2 py-1">
+                    <input 
+                        type="text"
+                        value="${row[col]}"
+                        title="${errorText}"
+                        data-field="${col}"
+                        class="w-full p-1 border ${hasError ? 'border-red-500 bg-red-50' : 'border-gray-300'}"
+                    >
+                </td>
+                `;
+                    });
+
+                    invalidHTML += '</tr>';
+                });
+
+                invalidHTML += '</tbody></table>';
+
+                invalidHTML += `
+        <button id="revalidateBtn"
+            class="mt-4 bg-orange-600 text-white px-4 py-2 rounded">
+            Revalidate
+        </button>
+        `;
+
+                container.innerHTML += invalidHTML;
+            }
+        }
     </script>
 @endsection
