@@ -49,14 +49,24 @@ class BulkUploadController extends Controller
             foreach ($rows as $row) {
                 $data = array_combine($header, $row);
 
-                // Split full name into first and last name
-                $customerParts = explode(' ', $data['customer_name'], 2);
-                $data['first_name'] = $customerParts[0] ?? null;
-                $data['last_name'] = $customerParts[1] ?? null;
+                $customerParts = explode(' ', trim($data['customer_name']), 2);
+                $firstName = $customerParts[0] ?? null;
+                $lastName = $customerParts[1] ?? null;
 
                 $validator = Validator::make($data, [
-                    'first_name' => 'required|exists:customers,first_name',
-                    'last_name' => 'required|exists:customers,last_name',
+                    'customer_name' => [
+                        'required',
+                        function ($attribute, $value, $fail) use ($firstName, $lastName) {
+
+                            $exists = \App\Models\Customer::where('first_name', $firstName)
+                                ->where('last_name', $lastName)
+                                ->exists();
+
+                            if (! $exists) {
+                                $fail('Customer not found');
+                            }
+                        },
+                    ],
                     'sku' => 'required|exists:products,sku',
                     'qty' => 'required|integer|min:1',
                     'discount' => 'required|numeric|min:0',
@@ -64,7 +74,7 @@ class BulkUploadController extends Controller
                 ]);
 
                 if ($validator->fails()) {
-                    $data['errors'] = $validator->errors()->all();
+                    $data['errors'] = $validator->errors()->toArray();
                     $invalid[] = $data;
                 } else {
                     $valid[] = $data;

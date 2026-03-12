@@ -40,7 +40,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             ->name('orders.template');
         Route::post('/bulk-upload', [BulkUploadController::class, 'store'])
             ->name('orders.bulk-upload.store');
-        Route::post('/orders/bulk-upload/revalidate', [BulkUploadController::class, 'revalidate']);
+        Route::post('/bulk-upload/revalidate', [BulkUploadController::class, 'revalidate']);
 
         Route::get('/', [OrderController::class, 'index'])->name('orders.index');
         Route::get('/create', [OrderController::class, 'create'])->name('orders.create');

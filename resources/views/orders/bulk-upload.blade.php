@@ -51,9 +51,6 @@
                     const container = document.getElementById('uploadResult');
                     container.innerHTML = '';
 
-                    console.log(data);
-
-
                     if (data.error) {
                         container.innerHTML = `<div class="text-red-600">${data.error}</div>`;
                         return;
@@ -61,7 +58,7 @@
 
                     // Valid rows table
                     if (data.valid.length > 0) {
-                        let validHTML = '<h3 class="font-bold mb-2">Valid Rows</h3>';
+                        let validHTML = '<h3 class="font-bold mb-2 text--600">Valid Rows</h3>';
                         validHTML += '<table class="border w-full mb-4"><thead><tr>';
                         Object.keys(data.valid[0]).forEach(col => {
                             if (col !== 'errors') validHTML +=
@@ -104,20 +101,22 @@
 
                                 if (col === 'errors') return;
 
-                                const hasError = row.errors.some(err => err.toLowerCase()
-                                    .includes(col));
+                                // const fieldName = col.replaceAll('_', ' ').toLowerCase();
+
+                                const hasError = row.errors && row.errors[col];
+
+                               
 
                                 invalidHTML += `
-                <td class="border px-2 py-1">
-                    <input 
-                        type="text"
-                        value="${row[col]}"
-                        data-field="${col}"
-                        class="w-full p-1 border ${hasError ? 'border-red-500 bg-red-50' : 'border-gray-300'}"
-                    >
-                </td>
-            `;
-
+                                    <td class="border px-2 py-1">
+                                        <input 
+                                            type="text"
+                                            value="${row[col]}"
+                                            data-field="${col}"
+                                            class="w-full p-1 border ${hasError ? 'border-red-500 bg-red-50' : 'border-gray-300'}"
+                                        >
+                                    </td>
+                                    `;
                             });
 
                             invalidHTML += '</tr>';
@@ -126,11 +125,11 @@
                         invalidHTML += '</tbody></table>';
 
                         invalidHTML += `
-        <button id="revalidateBtn"
-            class="mt-4 bg-orange-600 text-white px-4 py-2 rounded">
-            Revalidate
-        </button>
-    `;
+                            <button id="revalidateBtn"
+                                class="mt-4 bg-orange-600 text-white px-4 py-2 rounded">
+                                Revalidate
+                            </button>
+                        `;
 
                         container.innerHTML += invalidHTML;
                     }
@@ -146,6 +145,7 @@
             if (e.target.id === 'revalidateBtn') {
 
                 const rows = document.querySelectorAll('#uploadResult tbody tr');
+                
 
                 let correctedData = [];
 
