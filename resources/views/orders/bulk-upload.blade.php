@@ -119,6 +119,45 @@
             }
         });
 
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('deleteRowBtn')) {
+                const row = e.target.closest('tr');
+                row.remove(); // remove row from table
+            }
+
+            if (e.target.id === 'revalidateBtn') {
+                const rows = document.querySelectorAll('#uploadResult tbody tr');
+                let correctedData = [];
+
+                rows.forEach(row => {
+                    let obj = {};
+                    row.querySelectorAll('input').forEach(input => {
+                        obj[input.dataset.field] = input.value;
+                    });
+                    correctedData.push(obj);
+                });
+
+                fetch('/orders/bulk-upload/revalidate', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value
+                        },
+                        body: JSON.stringify({
+                            rows: correctedData
+                        })
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        validRows = [...validRows, ...data.valid];
+                        renderTables({
+                            valid: validRows,
+                            invalid: data.invalid
+                        });
+                    });
+            }
+        });
+
         function renderTables(data) {
 
             const container = document.getElementById('uploadResult');
@@ -194,6 +233,15 @@
                 </td>
                 `;
                     });
+
+                    // Add Delete button
+                    invalidHTML += `
+                    <td class="border px-2 py-1">
+                        <button class="deleteRowBtn bg-red-600 text-white px-2 py-1 rounded">
+                            Delete
+                        </button>
+                    </td>
+                `;
 
                     invalidHTML += '</tr>';
                 });
