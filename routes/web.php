@@ -4,10 +4,10 @@ use App\Http\Controllers\BulkUploadController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\OrderController;
-use App\Http\Controllers\ProductController;
-use App\Http\Controllers\UserController;
-use App\Http\Controllers\RoleController;
 use App\Http\Controllers\PermissionController;
+use App\Http\Controllers\ProductController;
+use App\Http\Controllers\RoleController;
+use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
 // Public route (accessible without login)
@@ -19,50 +19,52 @@ require __DIR__.'/auth.php';
 // All routes that require authentication
 Route::middleware(['auth', 'verified'])->group(function () {
 
-    // Dashboard and profile
-    Route::view('dashboard', 'dashboard.index')->name('dashboard');
-    Route::view('profile', 'profile')->name('profile');
-
     // Products
-    Route::get('/products/list', [ProductController::class, 'list']);
-    Route::put('/products/{hash}/status', [ProductController::class, 'toggleStatus']);
-    Route::resource('/products', ProductController::class);
-
-    // Categories
-    Route::post('/categories', [CategoryController::class, 'store'])->name('categories.store');
-    Route::get('/customers/list', [CustomerController::class, 'list']);
-
-    // Customers
-    Route::resource('/customers', CustomerController::class);
-
-    // Orders
-    // Route::resource('/orders', OrderController::class);
-    Route::prefix('orders')->group(function () {
-        // Bulk order processing
-        Route::resource('/bulk-upload', BulkUploadController::class);
-        Route::get('/template', [BulkUploadController::class, 'downloadTemplate'])
-            ->name('orders.template');
-        Route::post('/bulk-upload', [BulkUploadController::class, 'store'])
-            ->name('orders.bulk-upload.store');
-        Route::post('/bulk-upload/revalidate', [BulkUploadController::class, 'revalidate']);
-        Route::post('/bulk-upload/process', [BulkUploadController::class, 'processOrders'])
-            ->name('orders.bulk-upload.process');
-        Route::get('/bulk-upload/results', [BulkUploadController::class, 'results'])->name('orders.bulk-upload.results');
-
-        // Single order place
-        Route::get('/', [OrderController::class, 'index'])->name('orders.index');
-        Route::get('/create', [OrderController::class, 'create'])->name('orders.create');
-        Route::post('/', [OrderController::class, 'store'])->name('orders.store');
-        Route::get('/{order}', [OrderController::class, 'show'])->name('orders.show');
-        Route::put('/{order}/status', [OrderController::class, 'updateStatus'])->name('orders.updateStatus');
-
+    Route::group(['middleware' => ['role:admin|manager|inventory']], function () {
+        Route::get('/products/list', [ProductController::class, 'list']);
+        Route::put('/products/{hash}/status', [ProductController::class, 'toggleStatus']);
+        Route::resource('/products', ProductController::class);
     });
 
-    // Users
-    Route::resource('/users', UserController::class);
+    // Categories (manager only)
+    Route::group(['middleware' => ['role:admin|manager']], function () {
+        Route::post('/categories', [CategoryController::class, 'store'])->name('categories.store');
+    });
 
-    Route::resource('/roles', RoleController::class);
+    // Customers
+    Route::group(['middleware' => ['role:admin|manager|cashier']], function () {
+        Route::get('/customers/list', [CustomerController::class, 'list']);
+        Route::resource('/customers', CustomerController::class);
+    });
 
-    Route::resource('/permissions', PermissionController::class);
+    // Orders
+    Route::group(['middleware' => ['role:admin|manager|cashier']], function () {
+        Route::prefix('orders')->group(function () {
+            Route::resource('/bulk-upload', BulkUploadController::class);
+            Route::get('/template', [BulkUploadController::class, 'downloadTemplate'])->name('orders.template');
+            Route::post('/bulk-upload', [BulkUploadController::class, 'store'])->name('orders.bulk-upload.store');
+            Route::post('/bulk-upload/revalidate', [BulkUploadController::class, 'revalidate']);
+            Route::post('/bulk-upload/process', [BulkUploadController::class, 'processOrders'])->name('orders.bulk-upload.process');
+            Route::get('/bulk-upload/results', [BulkUploadController::class, 'results'])->name('orders.bulk-upload.results');
+
+            Route::get('/', [OrderController::class, 'index'])->name('orders.index');
+            Route::get('/create', [OrderController::class, 'create'])->name('orders.create');
+            Route::post('/', [OrderController::class, 'store'])->name('orders.store');
+            Route::get('/{order}', [OrderController::class, 'show'])->name('orders.show');
+            Route::put('/{order}/status', [OrderController::class, 'updateStatus'])->name('orders.updateStatus');
+        });
+    });
+
+    // Users (admin only)
+    Route::group(['middleware' => ['role:admin']], function () {
+        Route::resource('/users', UserController::class);
+        Route::resource('/roles', RoleController::class);
+        Route::resource('/permissions', PermissionController::class);
+    });
+
+    Route::view('/profile', 'profile')->name('profile');
+    Route::get('/dashboard', function () {
+        return view('dashboard');
+    })->name('dashboard');
 
 });
