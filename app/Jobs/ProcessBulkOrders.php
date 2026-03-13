@@ -12,6 +12,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class ProcessBulkOrders implements ShouldQueue
 {
@@ -26,7 +27,6 @@ class ProcessBulkOrders implements ShouldQueue
 
     public function handle()
     {
-       
         foreach ($this->rows as $data) {
 
             DB::transaction(function () use ($data) {
@@ -45,6 +45,9 @@ class ProcessBulkOrders implements ShouldQueue
                 if (!$customer || !$product) {
                     return;
                 }
+
+
+                Log::debug('Processing order for customer: ' . $customer->first_name . ' ' . $customer->last_name);
 
                 $qty = (int) $data['qty'];
                 $discount = (float) $data['discount'];
