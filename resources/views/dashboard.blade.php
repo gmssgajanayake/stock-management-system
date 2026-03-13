@@ -15,9 +15,9 @@
                     href="{{ route('orders.index') }}" class="w-full hover:bg-slate-500 p-4">Orders</a> </div> {{--
             seperate here adding ADMIN lable--}} <div class="mt-6 flex flex-col"> <span
                     class="px-4 text-gray-400 uppercase text-xs font-semibold tracking-wide">Admin</span> <a
-                    href="{{ route('dashboard') }}" class="w-full hover:bg-slate-500 p-4">Users</a> <a
-                    href="{{ route('products.index') }}" class="w-full hover:bg-slate-500 p-4">Roles</a> <a
-                    href="{{ route('customers.index') }}" class="w-full hover:bg-slate-500 p-4">Permissions</a> </div>
+                    href="{{ route('users.index') }}" class="w-full hover:bg-slate-500 p-4">Users</a> <a
+                    href="{{ route('roles.index') }}" class="w-full hover:bg-slate-500 p-4">Roles</a> <a
+                    href="{{ route('permissions.index') }}" class="w-full hover:bg-slate-500 p-4">Permissions</a> </div>
             <div :class="{'block': open, 'hidden': ! open}" class="hidden sm:hidden">
                 <!-- Responsive Settings Options -->
                 <div class="pt-4 pb-1 dark:border-gray-600">

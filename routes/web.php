@@ -5,6 +5,9 @@ use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\UserController;
+use App\Http\Controllers\RoleController;
+use App\Http\Controllers\PermissionController;
 use Illuminate\Support\Facades\Route;
 
 // Public route (accessible without login)
@@ -54,5 +57,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::put('/{order}/status', [OrderController::class, 'updateStatus'])->name('orders.updateStatus');
 
     });
+
+    // Users
+    Route::resource('/users', UserController::class);
+
+    Route::resource('/roles', RoleController::class);
+
+    Route::resource('/permissions', PermissionController::class);
 
 });
